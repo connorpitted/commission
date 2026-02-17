@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agency Commission Calculator</title>
+</head>
+<body>
+
+<div class="pit-calc-wrapper" id="pitted_wrapper_root">
+  <style>
+    /* CORE THEME FROM TEMPLATE */
+    .pit-calc-wrapper {
+      --bg-dark: #0f172a; --bg-panel: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8;
+      --accent-blue: #0ea5e9; --accent-green: #10b981; --accent-red: #ef4444; 
+      --accent-orange: #f59e0b; --accent-purple: #8b5cf6;
+      --border: #334155;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark); color: var(--text-main); width: 100%; box-sizing: border-box;
+    }
+    .pit-calc-wrapper * { box-sizing: border-box; }
+
+    .pit-hero {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(14, 165, 233, 0.05) 100%);
+      border-bottom: 1px solid var(--border); padding: 40px 20px; text-align: center;
+    }
+    .pit-hero-title { font-size: 2rem; font-weight: 800; letter-spacing: -1px; margin: 0; color: #fff; }
+    .pit-hero-sub { font-size: 1rem; color: var(--text-muted); margin-top: 10px; }
+
+    .pit-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+    .pit-grid { display: grid; grid-template-columns: 400px 1fr; gap: 40px; }
+    
+    .pit-card {
+      background: var(--bg-panel); border-radius: 16px; padding: 24px; border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .pit-h4 { margin: 0 0 12px 0; font-weight: 700; font-size: 1.1rem; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .text-blue { color: var(--accent-blue) !important; }
+    .text-green { color: var(--accent-green) !important; }
+    .text-orange { color: var(--accent-orange) !important; }
+    .text-muted { color: var(--text-muted) !important; }
+    .text-right { text-align: right; }
+
+    .pit-label {
+      display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-muted); margin-bottom: 6px; font-weight: 600;
+    }
+    .pit-group { margin-bottom: 20px; }
+    .pit-row { display: flex; gap: 10px; }
+    .pit-col { flex: 1; }
+
+    .pit-input {
+      width: 100%; background: #0f172a; border: 1px solid var(--border);
+      color: #fff; padding: 10px; border-radius: 8px; font-size: 16px; transition: border-color 0.2s;
+    }
+    .pit-input:focus { outline: none; border-color: var(--accent-blue); }
+
+    /* CHECKBOX TOGGLE */
+    .pit-toggle-label {
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--border);
+    }
+    .pit-checkbox { accent-color: var(--accent-blue); width: 18px; height: 18px; }
+
+    /* TIER BUILDER */
+    .tier-row {
+      display: flex; gap: 8px; margin-bottom: 8px; align-items: center;
+      background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;
+    }
+    .tier-input { 
+      background: transparent; border: none; border-bottom: 1px solid var(--border); 
+      color: #fff; width: 100%; font-size: 14px; padding: 4px; text-align: right;
+    }
+    .tier-input:focus { outline: none; border-bottom-color: var(--accent-blue); }
+    .tier-btn {
+      background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-muted);
+      cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; transition: 0.2s;
+    }
+    .tier-btn:hover { background: var(--border); color: #fff; }
+
+    /* VISUALIZER */
+    .pit-chart-container {
+      height: 100px; margin-top: 30px; position: relative;
+      background: rgba(255,255,255,0.05); border-radius: 50px; overflow: hidden; display: flex;
+    }
+    .pit-chart-seg { height: 100%; transition: width 0.4s ease; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; color: rgba(0,0,0,0.6); }
+
+    .pit-big-number { font-size: 3.5rem; font-weight: 800; line-height: 1; color: #fff; margin: 10px 0; }
+    .pit-stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .pit-stat-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
+    
+    @media(max-width: 900px) {
+      .pit-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <section class="pit-hero">
+    <h1 class="pit-hero-title">Commission Calculator</h1>
+    <p class="pit-hero-sub">Estimate agency earnings based on Retainers, Commissions, and Adspend.</p>
+  </section>
+
+  <div class="pit-container">
+    <div class="pit-grid">
+
+      <!-- LEFT COLUMN: INPUTS -->
+      <div class="pit-card" style="height: fit-content;">
+        
+        <!-- SECTION 1: REVENUE & RETAINER -->
+        <h4 class="pit-h4 text-blue">1. Revenue & Retainer</h4>
+        
+        <div class="pit-group">
+          <label class="pit-label">Monthly Client Revenue ($)</label>
+          <input type="text" id="inp_rev" class="pit-input" value="$150,000">
+        </div>
+
+        <div class="pit-group">
+          <label class="pit-label">Flat Retainer ($)</label>
+          <input type="text" id="inp_retainer" class="pit-input" value="$5,000">
+        </div>
+
+        <!-- SECTION 2: COMMISSION MODEL -->
+        <h4 class="pit-h4 text-green" style="margin-top: 30px;">
+          2. Commission Structure
+        </h4>
+
+        <div class="pit-group">
+          <label class="pit-toggle-label">
+            <input type="checkbox" id="chk_tiered" class="pit-checkbox">
+            <span style="font-size: 14px; font-weight: 600;">Enable Tiered Commissions?</span>
+          </label>
+        </div>
+
+        <!-- Simple Commission UI -->
+        <div id="ui_simple">
+          <div class="pit-row">
+            <div class="pit-col">
+              <label class="pit-label">Baseline ($)</label>
+              <input type="text" id="inp_base" class="pit-input" value="$50,000">
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Comm. starts above this amount.</div>
+            </div>
+            <div class="pit-col">
+              <label class="pit-label">Rate (%)</label>
+              <input type="text" id="inp_comm_pct" class="pit-input" value="5%">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tiered Commission UI -->
+        <div id="ui_tiered" style="display: none;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; padding: 0 10px;">
+            <span class="pit-label" style="width: 30%;">Min ($)</span>
+            <span class="pit-label" style="width: 30%;">Max ($)</span>
+            <span class="pit-label" style="width: 20%;">Rate (%)</span>
+            <span style="width: 20px;"></span>
+          </div>
+          <div id="tier_list">
+            <!-- Tiers injected via JS -->
+          </div>
+          <button id="btn_add_tier" class="tier-btn" style="width: 100%; margin-top: 10px; padding: 8px;">+ Add Tier</button>
+        </div>
+
+        <!-- SECTION 3: ADSPEND -->
+        <h4 class="pit-h4 text-orange" style="margin-top: 30px;">
+          3. Adspend Profit
+        </h4>
+
+        <div class="pit-group">
+          <label class="pit-label">Total Adspend Managed ($)</label>
+          <input type="text" id="inp_adspend" class="pit-input" value="$25,000">
+        </div>
+
+        <div class="pit-row">
+          <div class="pit-col">
+            <label class="pit-label">Client Fee (%)</label>
+            <input type="text" id="inp_ad_fee" class="pit-input" value="5%">
+          </div>
+          <div class="pit-col">
+            <label class="pit-label">Soft. Cost (%)</label>
+            <input type="text" id="inp_ad_soft" class="pit-input" value="1.7%">
+          </div>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">
+          Net Ad Profit = Adspend × (Fee - Software Cost)
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: OUTPUTS -->
+      <div>
+        <div class="pit-card">
+          <h4 class="pit-h4 text-muted">Total Monthly Earnings</h4>
+          
+          <div id="out_total" class="pit-big-number">$0</div>
+          
+          <div class="pit-chart-container">
+            <!-- Retainer Bar -->
+            <div id="bar_ret" class="pit-chart-seg" style="width: 33%; background: var(--accent-blue);"></div>
+            <!-- Commission Bar -->
+            <div id="bar_comm" class="pit-chart-seg" style="width: 33%; background: var(--accent-green);"></div>
+            <!-- Adspend Bar -->
+            <div id="bar_ads" class="pit-chart-seg" style="width: 33%; background: var(--accent-orange);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+            <span>Retainer</span>
+            <span>Commission</span>
+            <span>Ad Profit</span>
+          </div>
+
+          <div class="pit-stat-grid">
+            <div class="pit-stat-card">
+              <div class="pit-label text-blue">Retainer</div>
+              <div id="out_ret" style="font-size: 1.2rem; font-weight: 700; color: #fff;">$0</div>
+            </div>
+            <div class="pit-stat-card">
+              <div class="pit-label text-green">Commissions</div>
+              <div id="out_comm" style="font-size: 1.2rem; font-weight: 700; color: #fff;">$0</div>
+            </div>
+            <div class="pit-stat-card">
+              <div class="pit-label text-orange">Ad Profit</div>
+              <div id="out_ads" style="font-size: 1.2rem; font-weight: 700; color: #fff;">$0</div>
+            </div>
+          </div>
+
+          <!-- P&L Breakdown Table -->
+          <table style="width: 100%; border-collapse: collapse; margin-top: 30px; font-size: 14px;">
+            <thead>
+              <tr>
+                <th style="text-align: left; color: var(--text-muted); padding: 8px; border-bottom: 1px solid var(--border);">Line Item</th>
+                <th style="text-align: right; color: var(--text-muted); padding: 8px; border-bottom: 1px solid var(--border);">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">Client Revenue</td>
+                <td class="text-right" id="tbl_rev">$0</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">Commissionable Revenue</td>
+                <td class="text-right text-muted" id="tbl_comm_rev">$0</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <span style="display: block;">Adspend Gross Fees</span>
+                  <span style="font-size: 10px; color: var(--text-muted);">@ <span id="tbl_ad_pct">0%</span> on <span id="tbl_ad_amt">$0</span> spend</span>
+                </td>
+                <td class="text-right" id="tbl_ad_gross">$0</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">Software Costs</td>
+                <td class="text-right text-red" id="tbl_ad_cost">-$0</td>
+              </tr>
+              <tr style="font-weight: 700; font-size: 16px; border-top: 2px solid var(--border);">
+                <td style="padding: 15px 10px;">TOTAL EARNINGS</td>
+                <td class="text-right text-blue" id="tbl_total">$0</td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+  // --- STATE & UTILS ---
+  
+  // Default Tiers for initialization
+  let tiers = [
+    { min: 0, max: 100000, rate: 2 },
+    { min: 100000, max: 250000, rate: 5 },
+    { min: 250000, max: null, rate: 10 } // null max means infinity
+  ];
+
+  const getEl = (id) => document.getElementById(id);
+  
+  const fmtMoney = (n) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: 'USD', maximumFractionDigits: 0
+    }).format(n);
+  };
+  
+  const parseNum = (str) => {
+    if(typeof str !== 'string') str = String(str);
+    let cleaned = str.replace(/[^0-9.]/g, "");
+    return parseFloat(cleaned) || 0;
+  };
+
+  // --- INPUT FORMATTING HELPERS ---
+
+  function setupMoneyInput(id) {
+    const el = getEl(id);
+    el.addEventListener('blur', () => {
+      el.value = fmtMoney(parseNum(el.value));
+      calculate();
+    });
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') el.blur();
+    });
+  }
+
+  function setupPctInput(id) {
+    const el = getEl(id);
+    el.addEventListener('blur', () => {
+      let val = parseNum(el.value);
+      el.value = val + "%";
+      calculate();
+    });
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') el.blur();
+    });
+  }
+
+  setupMoneyInput('inp_rev');
+  setupMoneyInput('inp_retainer');
+  setupMoneyInput('inp_base');
+  setupMoneyInput('inp_adspend');
+  setupPctInput('inp_comm_pct');
+  setupPctInput('inp_ad_fee');
+  setupPctInput('inp_ad_soft');
+
+  // --- TIERED LOGIC UI ---
+
+  const renderTiers = () => {
+    const list = getEl('tier_list');
+    list.innerHTML = '';
+    
+    tiers.forEach((t, idx) => {
+      const div = document.createElement('div');
+      div.className = 'tier-row';
+      
+      // Min Input
+      const minInp = document.createElement('input');
+      minInp.className = 'tier-input';
+      minInp.value = fmtMoney(t.min);
+      minInp.onblur = (e) => { t.min = parseNum(e.target.value); renderTiers(); calculate(); };
+      
+      // Max Input
+      const maxInp = document.createElement('input');
+      maxInp.className = 'tier-input';
+      maxInp.placeholder = "∞";
+      maxInp.value = t.max === null ? "" : fmtMoney(t.max);
+      maxInp.onblur = (e) => { 
+        let val = parseNum(e.target.value);
+        t.max = val === 0 ? null : val; 
+        renderTiers(); calculate(); 
+      };
+
+      // Rate Input
+      const rateInp = document.createElement('input');
+      rateInp.className = 'tier-input';
+      rateInp.style.color = '#10b981'; // Green text for rate
+      rateInp.value = t.rate + "%";
+      rateInp.onblur = (e) => { t.rate = parseNum(e.target.value); renderTiers(); calculate(); };
+
+      // Delete Button
+      const delBtn = document.createElement('button');
+      delBtn.innerText = "×";
+      delBtn.className = "tier-btn";
+      delBtn.style.color = "#ef4444";
+      delBtn.onclick = () => {
+        tiers.splice(idx, 1);
+        renderTiers();
+        calculate();
+      };
+
+      // Layout
+      const wrap = (el, w) => {
+        const s = document.createElement('div');
+        s.style.width = w;
+        s.appendChild(el);
+        return s;
+      };
+
+      div.appendChild(wrap(minInp, '30%'));
+      div.appendChild(wrap(maxInp, '30%'));
+      div.appendChild(wrap(rateInp, '20%'));
+      div.appendChild(delBtn);
+
+      list.appendChild(div);
+    });
+  };
+
+  getEl('btn_add_tier').addEventListener('click', () => {
+    // Smart add: find last max and start new min there
+    let lastMax = 0;
+    if(tiers.length > 0) {
+      const last = tiers[tiers.length - 1];
+      if(last.max !== null) lastMax = last.max;
+      else lastMax = last.min + 50000; // arbitrary jump if last was infinity
+    }
+    tiers.push({ min: lastMax, max: null, rate: 5 });
+    renderTiers();
+    calculate();
+  });
+
+  // Toggle Listener
+  getEl('chk_tiered').addEventListener('change', (e) => {
+    const isTiered = e.target.checked;
+    getEl('ui_simple').style.display = isTiered ? 'none' : 'block';
+    getEl('ui_tiered').style.display = isTiered ? 'block' : 'none';
+    calculate();
+  });
+
+
+  // --- CALCULATION CORE ---
+
+  const calculate = () => {
+    // 1. Inputs
+    const rev = parseNum(getEl('inp_rev').value);
+    const retainer = parseNum(getEl('inp_retainer').value);
+    
+    // Adspend
+    const adSpend = parseNum(getEl('inp_adspend').value);
+    const adFeePct = parseNum(getEl('inp_ad_fee').value);
+    const adSoftPct = parseNum(getEl('inp_ad_soft').value);
+
+    // 2. Calculate Adspend Profit
+    // Gross Fee = Spend * Fee%
+    // Cost = Spend * Soft%
+    // Profit = Spend * (Fee% - Soft%)
+    const adGross = adSpend * (adFeePct / 100);
+    const adCost = adSpend * (adSoftPct / 100);
+    const adProfit = Math.max(0, adGross - adCost);
+
+    // 3. Calculate Commission
+    let commTotal = 0;
+    let commRevString = ""; // For table display
+
+    const isTiered = getEl('chk_tiered').checked;
+
+    if (!isTiered) {
+      // Simple Model
+      const baseline = parseNum(getEl('inp_base').value);
+      const rate = parseNum(getEl('inp_comm_pct').value);
+      
+      const commRev = Math.max(0, rev - baseline);
+      commTotal = commRev * (rate / 100);
+      commRevString = `${fmtMoney(commRev)} (Rev > ${fmtMoney(baseline)})`;
+    } else {
+      // Tiered Model
+      tiers.forEach(t => {
+        // Find overlap between [t.min, t.max] and [0, rev]
+        let tierMax = t.max === null ? Infinity : t.max;
+        
+        // The portion of revenue that falls into this bucket
+        let start = Math.max(t.min, 0);
+        let end = Math.min(tierMax, rev);
+        
+        if (end > start) {
+          let taxable = end - start;
+          commTotal += taxable * (t.rate / 100);
+        }
+      });
+      commRevString = "Tiered Calculation";
+    }
+
+    // 4. Totals
+    const totalEarnings = retainer + commTotal + adProfit;
+
+    // 5. Update UI
+    getEl('out_total').innerText = fmtMoney(totalEarnings);
+    getEl('out_ret').innerText = fmtMoney(retainer);
+    getEl('out_comm').innerText = fmtMoney(commTotal);
+    getEl('out_ads').innerText = fmtMoney(adProfit);
+
+    // Update Bars
+    // Prevent divide by zero if total is 0
+    const safeTotal = totalEarnings || 1; 
+    const pRet = (retainer / safeTotal) * 100;
+    const pComm = (commTotal / safeTotal) * 100;
+    const pAds = (adProfit / safeTotal) * 100;
+
+    const barRet = getEl('bar_ret');
+    const barComm = getEl('bar_comm');
+    const barAds = getEl('bar_ads');
+
+    barRet.style.width = pRet + "%";
+    barComm.style.width = pComm + "%";
+    barAds.style.width = pAds + "%";
+
+    // Hide bars if 0 width to clean up borders/text
+    barRet.innerText = pRet > 10 ? "" : ""; 
+    barComm.innerText = pComm > 10 ? "" : "";
+    barAds.innerText = pAds > 10 ? "" : "";
+
+    // Table
+    getEl('tbl_rev').innerText = fmtMoney(rev);
+    getEl('tbl_comm_rev').innerText = commRevString;
+    getEl('tbl_ad_amt').innerText = fmtMoney(adSpend);
+    getEl('tbl_ad_pct').innerText = adFeePct + "%";
+    getEl('tbl_ad_gross').innerText = fmtMoney(adGross);
+    getEl('tbl_ad_cost').innerText = "-" + fmtMoney(adCost);
+    getEl('tbl_total').innerText = fmtMoney(totalEarnings);
+  };
+
+  // Initialize
+  renderTiers();
+  calculate();
+
+});
+</script>
+
+</body>
+</html>
