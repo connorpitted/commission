@@ -125,7 +125,8 @@
           <label class="pit-label">Monthly Client Revenue ($)</label>
           <input type="text" id="inp_rev" class="pit-input" value="$150,000">
           <!-- NEW SLIDER ADDED HERE -->
-          <input type="range" id="rng_rev" class="pit-slider" min="0" max="2000000" step="1000" value="150000">
+<input type="range" id="rng_rev" class="pit-slider" min="0" max="200" step="1" value="60">
+
         </div>
 
         <div class="pit-group">
@@ -338,23 +339,47 @@ document.addEventListener("DOMContentLoaded", function() {
   setupPctInput('inp_ad_fee');
   setupPctInput('inp_ad_soft');
 
-  // --- SLIDER LOGIC ---
+// --- NON-LINEAR SLIDER LOGIC ---
   const revInp = getEl('inp_rev');
   const revRng = getEl('rng_rev');
 
+  // Helper: Map slider (0-200) to Revenue ($)
+  function sliderToRevenue(val) {
+    // 0-50 (First 50 steps): 0 to 50k ($1k steps)
+    if (val <= 50) return val * 1000;
+    
+    // 51-60 (Next 10 steps): 50k to 100k ($5k steps)
+    if (val <= 60) return 50000 + ((val - 50) * 5000);
+    
+    // 61-150 (Next 90 steps): 100k to 1M ($10k steps)
+    if (val <= 150) return 100000 + ((val - 60) * 10000);
+    
+    // 151-200 (Last 50 steps): 1M to 3.5M ($50k steps)
+    return 1000000 + ((val - 150) * 50000);
+  }
+
+  // Helper: Map Revenue ($) back to Slider (0-200)
+  // (Used if user types a number manually)
+  function revenueToSlider(dollars) {
+    if (dollars <= 50000) return dollars / 1000;
+    if (dollars <= 100000) return 50 + ((dollars - 50000) / 5000);
+    if (dollars <= 1000000) return 60 + ((dollars - 100000) / 10000);
+    // Cap at slider max (200)
+    return Math.min(200, 150 + ((dollars - 1000000) / 50000));
+  }
+
   // 1. Slider moves -> Update Text
   revRng.addEventListener('input', (e) => {
-    const val = parseFloat(e.target.value);
-    revInp.value = fmtMoney(val);
+    const stepVal = parseFloat(e.target.value);
+    const moneyVal = sliderToRevenue(stepVal);
+    revInp.value = fmtMoney(moneyVal);
     calculate();
   });
 
   // 2. Text updates -> Update Slider
   revInp.addEventListener('blur', () => {
-    const val = parseNum(revInp.value);
-    // Determine max for slider dynamically if user enters huge number? 
-    // For now we keep slider max at 500k, but text can go higher.
-    revRng.value = val; 
+    const moneyVal = parseNum(revInp.value);
+    revRng.value = revenueToSlider(moneyVal);
     calculate();
   });
 
